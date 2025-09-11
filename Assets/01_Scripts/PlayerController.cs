@@ -4,27 +4,35 @@ public class PlayerController : MonoBehaviour
 {
     public float moveSpeed = 20f;
     public float mouseSensitivity = 150f;
-    public Transform playerCamera; // 카메라 Transform을 연결할 변수
+    public Transform playerCamera;
 
     private Rigidbody rb;
-    private float verticalRotation = 0f; // 카메라의 상하 회전 값을 저장할 변수
+    private float verticalRotation = 0f;
+
+    // === GameManager 변수 추가 ===
+    private GameManager gameManager;
 
     void Awake()
     {
-        // Rigidbody 컴포넌트 가져오기
         rb = GetComponent<Rigidbody>();
-        // Rigidbody의 회전을 고정하여 캐릭터가 넘어지지 않도록 합니다.
         rb.freezeRotation = true;
     }
 
     void Start()
     {
-        // 마우스 숨기기
-        Cursor.lockState = CursorLockMode.Locked;
+        // === GameManager 오브젝트 찾아서 연결 ===
+        gameManager = FindObjectOfType<GameManager>();
+        if (gameManager == null)
+        {
+            Debug.LogError("GameManager를 씬에서 찾을 수 없습니다.");
+        }
     }
 
     void Update()
     {
+        // 게임이 시작되지 않았거나 멈춰있으면 움직이지 않습니다.
+        if (Time.timeScale == 0) return;
+
         // 키보드 입력 받기
         float horizontalInput = Input.GetAxisRaw("Horizontal");
         float verticalInput = Input.GetAxisRaw("Vertical");
@@ -36,30 +44,30 @@ public class PlayerController : MonoBehaviour
         // 카메라 회전 (상하)
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
         verticalRotation -= mouseY;
-        verticalRotation = Mathf.Clamp(verticalRotation, -90f, 90f); // 상하 회전 각도 제한
+        verticalRotation = Mathf.Clamp(verticalRotation, -90f, 90f);
         playerCamera.localRotation = Quaternion.Euler(verticalRotation, 0f, 0f);
 
         // 이동 (키보드)
         Vector3 moveDirection = new Vector3(horizontalInput, 0f, verticalInput).normalized;
 
-        // MovePosition을 사용하면 Rigidbody를 통해 안전하게 이동할 수 있습니다.
-        // 이를 통해 물리 충돌을 감지하고 벽을 통과하지 않게 됩니다.
         Vector3 finalMovement = transform.TransformDirection(moveDirection) * moveSpeed;
         rb.linearVelocity = finalMovement;
     }
 
-    public void Die()
-    {
-        gameObject.SetActive(false);
-    }
-
+    // === 충돌 처리 함수 수정 ===
     void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("EXIT"))
+        // 다이아몬드와 접촉하면 게임 승리 함수 호출
+        if (other.CompareTag("Diamond"))
         {
-            // 게임 종료
-            Debug.Log("게임 승리! 탈출에 성공했습니다.");
-            gameObject.SetActive(false); // 플레이어 비활성화 (게임 종료 효과)
+            gameManager.WinGame();
+            Destroy(other.gameObject); // 다이아몬드 파괴
+        }
+
+        // 총알(몬스터)과 접촉하면 게임 패배 함수 호출
+        if (other.CompareTag("Bullet"))
+        {
+            gameManager.LoseGame();
         }
     }
 }

@@ -4,10 +4,10 @@ public class MonsterSpawner : MonoBehaviour
 {
     public GameObject monsterPrefab;
     public LayerMask obstacleLayer; // 장애물 레이어
-    public float spawnRadius = 10f; // 스포너 기준 최대 생성 반경
-    public float checkRadius = 1f; // 생성 위치가 안전한지 확인할 반경
+    public float spawnRadius = 350f; // 스포너 기준 최대 생성 반경
+    public float checkRadius = 20f; // 생성 위치가 안전한지 확인할 반경
 
-    public float spawnRate = 2f;
+    public float spawnRate = 3f;
     private float timeAfterSpawn;
 
     void Update()
